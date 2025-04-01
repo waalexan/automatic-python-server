@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MapaZZZ - IA Angolana</title>
+    <style>
+        /* Mantenha os estilos CSS anteriores */
+        .response {
+            white-space: pre-wrap;
+            line-height: 1.6;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        
+        .code-block {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>MapaZZZ 🗺️ - IA Angolana</h1>
+    <form id="questionForm">
+        <input type="text" id="questionInput" placeholder="Faça sua pergunta..." required>
+        <button type="submit">Enviar</button>
+    </form>
+    <div id="responses"></div>
+
+    <script>
+        document.getElementById('questionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const question = document.getElementById('questionInput').value.trim();
+            if (!question) return;
+
+            const responsesDiv = document.getElementById('responses');
+            document.getElementById('questionInput').value = '';
+            
+            // Elementos de exibição
+            const questionDiv = document.createElement('div');
+            questionDiv.className = 'response';
+            questionDiv.innerHTML = `<strong>Você:</strong> ${question}`;
+            responsesDiv.appendChild(questionDiv);
+
+            const responseDiv = document.createElement('div');
+            responseDiv.className = 'response';
+            responsesDiv.appendChild(responseDiv);
+
+            try {
+                const response = await fetch('http://localhost:5000/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: question })
+                });
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                let fullResponse = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const chunks = buffer.split('\n');
+                    buffer = chunks.pop() || '';
+
+                    for (const chunk of chunks) {
+                        if (chunk.startsWith('data:')) {
+                            const text = chunk.substring(5).trim();
+                            fullResponse += text;
+                            responseDiv.innerHTML = fullResponse;
+                        }
+                    }
+                }
+
+                // Processar dados remanescentes
+                if (buffer.startsWith('data:')) {
+                    const text = buffer.substring(5).trim();
+                    fullResponse += text;
+                    responseDiv.innerHTML = fullResponse;
+                }
+
+            } catch (error) {
+                console.error('Erro:', error);
+                responseDiv.innerHTML = '❌ Erro ao conectar com o servidor';
+            }
+        });
+    </script>
+</body>
+</html>

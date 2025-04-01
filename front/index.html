@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Nomes</title>
+    <style>
+        #names-container {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .name {
+            padding: 10px;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Lista de Nomes</h1>
+    <div id="names-container">
+        
+    </div>
+
+    <script>
+        // Abrindo a conexão com a API Flask usando EventSource (para  )
+        const eventSource = new EventSource('http://localhost:5000/get_names');
+
+        // Ouvindo as mensagens de dados (SSE)
+        eventSource.onmessage = function(event) {
+            // Criando uma nova div para cada nome
+            const nameContainer = document.getElementById('names-container');
+            const nameDiv = document.createElement('div');
+            nameDiv.classList.add('name');
+            console.log(event)
+            nameDiv.textContent = event.data;
+            nameContainer.appendChild(nameDiv);
+        };
+
+        // Fechando a conexão ao final (caso necessário)
+        eventSource.onerror = function() {
+            eventSource.close();
+        };
+    </script>
+</body>
+</html>
